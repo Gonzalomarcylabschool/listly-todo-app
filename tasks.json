@@ -1,0 +1,432 @@
+{
+  "project": "Listly Todo App",
+  "version": "1.0.0",
+  "description": "Task breakdown and development order for the mobile-first todo application",
+  "phases": {
+    "phase_1_foundation": {
+      "name": "Project Foundation & Setup",
+      "priority": "critical",
+      "estimated_duration": "3-5 days",
+      "tasks": [
+        {
+          "id": "setup-001",
+          "title": "Initialize project structure",
+          "description": "Set up PERN stack with Vite, create folder structure",
+          "priority": "must_have",
+          "estimated_hours": 4,
+          "dependencies": [],
+          "acceptance_criteria": [
+            "Frontend React app with Vite bundler running",
+            "Backend Express server with basic routing",
+            "PostgreSQL database connection established",
+            "Environment configuration setup"
+          ]
+        },
+        {
+          "id": "setup-002",
+          "title": "Configure development tools",
+          "description": "Set up TypeScript, ESLint, Prettier, testing framework",
+          "priority": "must_have",
+          "estimated_hours": 3,
+          "dependencies": ["setup-001"],
+          "acceptance_criteria": [
+            "TypeScript configured for both frontend and backend",
+            "Linting and formatting rules established",
+            "Testing framework (Jest/Vitest) configured",
+            "Git hooks for code quality"
+          ]
+        },
+        {
+          "id": "setup-003",
+          "title": "Install and configure UI dependencies",
+          "description": "Set up Tailwind CSS and shadcn/ui components",
+          "priority": "must_have",
+          "estimated_hours": 2,
+          "dependencies": ["setup-001"],
+          "acceptance_criteria": [
+            "Tailwind CSS integrated and working",
+            "shadcn/ui components library configured",
+            "Basic component structure created",
+            "Mobile-first responsive setup verified"
+          ]
+        }
+      ]
+    },
+    "phase_2_database_auth": {
+      "name": "Database Schema & Authentication",
+      "priority": "critical",
+      "estimated_duration": "6-8 days",
+      "tasks": [
+        {
+          "id": "landing-001",
+          "title": "Create landing page",
+          "description": "Build compelling landing page explaining app value proposition",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["setup-003"],
+          "acceptance_criteria": [
+            "Mobile-first responsive design",
+            "Clear value proposition for target personas",
+            "Compelling hero section with call-to-action",
+            "Feature highlights section",
+            "User testimonials or benefits section",
+            "Clear navigation to signup/login pages",
+            "Fast load times (<1.5s on mobile)",
+            "Uses shadcn/ui components for consistency",
+            "Accessible design following WCAG guidelines"
+          ]
+        },
+        {
+          "id": "routing-001",
+          "title": "Update application routing",
+          "description": "Implement proper routing structure with landing page as default",
+          "priority": "must_have",
+          "estimated_hours": 3,
+          "dependencies": ["landing-001"],
+          "acceptance_criteria": [
+            "Landing page is default route (/)",
+            "Login page accessible at /login",
+            "Signup page accessible at /signup",
+            "Dashboard accessible at /dashboard (protected)",
+            "Proper route protection for authenticated users",
+            "Redirect authenticated users away from auth pages",
+            "404 page for invalid routes"
+          ]
+        },
+        {
+          "id": "db-001",
+          "title": "Design and implement database schema",
+          "description": "Create users and tasks tables with proper relationships",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["setup-001"],
+          "acceptance_criteria": [
+            "Users table with email, password hash, timestamps",
+            "Tasks table with title, description, priority, status, deadline",
+            "Proper foreign key relationships",
+            "Database migrations setup",
+            "Enums for priority and status implemented"
+          ]
+        },
+        {
+          "id": "auth-001",
+          "title": "Implement user registration",
+          "description": "Email/password signup with validation and security",
+          "priority": "must_have",
+          "estimated_hours": 8,
+          "dependencies": ["db-001", "routing-001"],
+          "acceptance_criteria": [
+            "User can register with email and password",
+            "Password hashing with bcrypt (12+ rounds)",
+            "Email validation and uniqueness check",
+            "Proper error handling and user feedback",
+            "Input sanitization and validation",
+            "Signup page accessible from landing page",
+            "Redirect to dashboard after successful signup"
+          ]
+        },
+        {
+          "id": "auth-002",
+          "title": "Implement user login/logout",
+          "description": "Secure session management with JWT or cookies",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["auth-001", "routing-001"],
+          "acceptance_criteria": [
+            "User can login with email and password",
+            "Secure session management implemented",
+            "User can logout and session is invalidated",
+            "Protected routes require authentication",
+            "Session persistence across browser refresh",
+            "Login page accessible from landing page",
+            "Redirect to dashboard after successful login"
+          ]
+        },
+        {
+          "id": "auth-003",
+          "title": "Implement password reset",
+          "description": "Password reset functionality via email",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["auth-002"],
+          "acceptance_criteria": [
+            "User can request password reset",
+            "Secure token generation and validation",
+            "Email sending capability (or simulation)",
+            "New password setting with proper validation",
+            "Old sessions invalidated on password change"
+          ]
+        }
+      ]
+    },
+    "phase_3_core_tasks": {
+      "name": "Core Task Management",
+      "priority": "critical",
+      "estimated_duration": "7-10 days",
+      "tasks": [
+        {
+          "id": "task-001",
+          "title": "Quick task creation",
+          "description": "Fast, minimal input task creation (<10 seconds)",
+          "priority": "must_have",
+          "estimated_hours": 8,
+          "dependencies": ["auth-002"],
+          "acceptance_criteria": [
+            "Task creation form loads in <1s",
+            "Minimal required fields (title only)",
+            "Auto-save or quick submit functionality",
+            "Mobile-optimized input experience",
+            "Task appears immediately in list"
+          ]
+        },
+        {
+          "id": "task-002",
+          "title": "Task listing and display",
+          "description": "Display user tasks with filtering and sorting",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["task-001"],
+          "acceptance_criteria": [
+            "All user tasks displayed in list",
+            "Clear visual distinction for task status",
+            "Priority indicators visible",
+            "Deadline display with visual cues",
+            "Mobile-first responsive design"
+          ]
+        },
+        {
+          "id": "task-003",
+          "title": "Edit and delete tasks",
+          "description": "In-place editing and task deletion",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["task-002"],
+          "acceptance_criteria": [
+            "User can edit task details in-place",
+            "Soft delete implementation (not hard delete)",
+            "Confirmation dialogs for destructive actions",
+            "Changes saved automatically or with clear save action",
+            "Undo functionality for accidental deletions"
+          ]
+        },
+        {
+          "id": "task-004",
+          "title": "Set task priorities",
+          "description": "Priority selection (low, medium, high) with visual indicators",
+          "priority": "must_have",
+          "estimated_hours": 4,
+          "dependencies": ["task-001"],
+          "acceptance_criteria": [
+            "Three priority levels: low, medium, high",
+            "Color-coded visual indicators",
+            "Easy priority selection in create/edit forms",
+            "Priority sorting capability",
+            "Clear visual hierarchy in task list"
+          ]
+        },
+        {
+          "id": "task-005",
+          "title": "Assign task deadlines",
+          "description": "Due date assignment with visual indicators",
+          "priority": "must_have",
+          "estimated_hours": 5,
+          "dependencies": ["task-001"],
+          "acceptance_criteria": [
+            "Date picker for deadline selection",
+            "Clear deadline display in task list",
+            "Visual indicators for overdue tasks",
+            "Timezone handling (UTC storage)",
+            "Optional deadline (not required)"
+          ]
+        },
+        {
+          "id": "task-006",
+          "title": "Mark tasks as completed",
+          "description": "Task completion with visual feedback",
+          "priority": "must_have",
+          "estimated_hours": 4,
+          "dependencies": ["task-002"],
+          "acceptance_criteria": [
+            "One-click task completion",
+            "Visual state change (strikethrough, color)",
+            "Completion timestamp recorded",
+            "Option to uncomplete tasks",
+            "Immediate UI feedback"
+          ]
+        },
+        {
+          "id": "task-007",
+          "title": "Defer/postpone tasks",
+          "description": "Reschedule tasks with new deadlines",
+          "priority": "must_have",
+          "estimated_hours": 5,
+          "dependencies": ["task-005"],
+          "acceptance_criteria": [
+            "Easy task postponement action",
+            "New deadline selection",
+            "Defer history tracking",
+            "Visual indicators for frequently deferred tasks",
+            "Quick reschedule options (tomorrow, next week)"
+          ]
+        }
+      ]
+    },
+    "phase_4_dashboard_ui": {
+      "name": "Dashboard & UI Polish",
+      "priority": "high",
+      "estimated_duration": "4-6 days",
+      "tasks": [
+        {
+          "id": "dash-001",
+          "title": "Visual progress dashboard",
+          "description": "Progress indicators and task statistics",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["task-006"],
+          "acceptance_criteria": [
+            "Pending vs completed task counts",
+            "Visual progress indicators (charts/bars)",
+            "Daily/weekly completion stats",
+            "Mobile-optimized dashboard layout",
+            "Real-time updates when tasks change"
+          ]
+        },
+        {
+          "id": "ui-001",
+          "title": "Mobile-first responsive design",
+          "description": "Ensure all components work perfectly on mobile",
+          "priority": "must_have",
+          "estimated_hours": 8,
+          "dependencies": ["dash-001"],
+          "acceptance_criteria": [
+            "All features work on mobile devices",
+            "Touch-friendly interface elements",
+            "Fast load times on mobile (<1.5s)",
+            "Proper viewport and meta tags",
+            "Testing on multiple device sizes"
+          ]
+        },
+        {
+          "id": "ui-002",
+          "title": "Clean, minimal UI implementation",
+          "description": "Polish UI for simplicity and ease of use",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["ui-001"],
+          "acceptance_criteria": [
+            "Consistent spacing and typography",
+            "Clear visual hierarchy",
+            "Minimal cognitive load",
+            "Intuitive navigation",
+            "Accessibility features implemented"
+          ]
+        }
+      ]
+    },
+    "phase_5_nice_to_have": {
+      "name": "Nice to Have Features",
+      "priority": "medium",
+      "estimated_duration": "3-5 days",
+      "tasks": [
+        {
+          "id": "theme-001",
+          "title": "Color themes (light/dark mode)",
+          "description": "Toggle between light and dark themes",
+          "priority": "nice_to_have",
+          "estimated_hours": 4,
+          "dependencies": ["ui-002"],
+          "acceptance_criteria": [
+            "Light and dark theme options",
+            "Theme preference persistence",
+            "System theme detection",
+            "Smooth theme transitions",
+            "All components support both themes"
+          ]
+        },
+        {
+          "id": "feedback-001",
+          "title": "Positive feedback messages",
+          "description": "Encouraging messages for task completion",
+          "priority": "nice_to_have",
+          "estimated_hours": 3,
+          "dependencies": ["task-006"],
+          "acceptance_criteria": [
+            "Variety of positive completion messages",
+            "Context-aware encouragement",
+            "Non-intrusive display",
+            "Option to disable if desired",
+            "Motivational tone matching user personas"
+          ]
+        },
+        {
+          "id": "reminder-001",
+          "title": "Gentle reminders",
+          "description": "Soft reminders for frequently deferred tasks",
+          "priority": "nice_to_have",
+          "estimated_hours": 5,
+          "dependencies": ["task-007"],
+          "acceptance_criteria": [
+            "Detection of frequently deferred tasks",
+            "Non-aggressive reminder system",
+            "User control over reminder frequency",
+            "Helpful rather than nagging tone",
+            "Easy dismissal of reminders"
+          ]
+        }
+      ]
+    },
+    "phase_6_testing_deployment": {
+      "name": "Testing & Deployment",
+      "priority": "critical",
+      "estimated_duration": "4-6 days",
+      "tasks": [
+        {
+          "id": "test-001",
+          "title": "Comprehensive testing suite",
+          "description": "Unit, integration, and E2E tests",
+          "priority": "must_have",
+          "estimated_hours": 12,
+          "dependencies": ["ui-002"],
+          "acceptance_criteria": [
+            "Unit tests for all utilities and components",
+            "Integration tests for API endpoints",
+            "E2E tests for critical user journeys",
+            "Mobile testing on real devices",
+            "Performance testing and optimization"
+          ]
+        },
+        {
+          "id": "deploy-001",
+          "title": "Production deployment setup",
+          "description": "Deploy app to production environment",
+          "priority": "must_have",
+          "estimated_hours": 6,
+          "dependencies": ["test-001"],
+          "acceptance_criteria": [
+            "Production database setup",
+            "Environment variables configured",
+            "HTTPS enabled",
+            "Performance monitoring setup",
+            "Backup and recovery procedures"
+          ]
+        }
+      ]
+    }
+  },
+  "development_notes": {
+    "priority_order": [
+      "Must complete all 'must_have' tasks before starting 'nice_to_have'",
+      "Each task should be fully completed (including tests) before moving to next",
+      "Mobile testing is required for every UI-related task",
+      "Performance targets must be met at each phase"
+    ],
+    "estimated_total_duration": "26-39 days",
+    "estimated_total_hours": "120-150 hours",
+    "team_size_assumption": "1-2 developers",
+    "risk_factors": [
+      "Mobile performance optimization may require additional time",
+      "Email functionality for password reset may need third-party service",
+      "Database optimization may be needed for larger user bases"
+    ]
+  }
+} 
