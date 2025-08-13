@@ -22,7 +22,7 @@ export function useTasks() {
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/tasks", {
+      const response = await fetch(`/api/tasks`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -58,7 +58,7 @@ export function useTasks() {
       }
       setTasks((prev) => [newTask, ...prev])
 
-      const response = await fetch("http://localhost:3001/api/tasks", {
+      const response = await fetch(`/api/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,8 +66,6 @@ export function useTasks() {
         },
         body: JSON.stringify(taskData),
       })
-
-      const isJson = response.headers.get("content-type")?.includes("application/json")
 
       if (!response.ok) {
         // Revert optimistic update on failure
@@ -87,7 +85,7 @@ export function useTasks() {
         prev.map((task) => (task.id === id ? { ...task, ...updates, updatedAt: new Date().toISOString() } : task)),
       )
 
-      const response = await fetch(`http://localhost:3001/api/tasks/${id}`, {
+      const response = await fetch(`/api/tasks/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -95,8 +93,6 @@ export function useTasks() {
         },
         body: JSON.stringify(updates),
       })
-
-      const isJson = response.headers.get("content-type")?.includes("application/json")
 
       if (!response.ok) {
         // Revert on failure
@@ -115,14 +111,12 @@ export function useTasks() {
       const taskToDelete = tasks.find((t) => t.id === id)
       setTasks((prev) => prev.filter((task) => task.id !== id))
 
-      const response = await fetch(`http://localhost:3001/api/tasks/${id}`, {
+      const response = await fetch(`/api/tasks/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       })
-
-      const isJson = response.headers.get("content-type")?.includes("application/json")
 
       if (!response.ok) {
         // Revert on failure

@@ -4,10 +4,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import fs from 'fs';
+import pool from './db';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Middleware
 app.use(cors({
@@ -19,66 +20,22 @@ app.use(express.json());
 // Serve static files from the React app build
 app.use(express.static(path.resolve(__dirname, '../../frontend/dist')));
 
-// Dummy data storage
-const users = [
-  {
-    id: '1',
-    email: 'test@example.com',
-    name: 'Test User',
-    password: '$2b$12$i4S8hay.bFfh8ACXoxePF.PkpjTZV4VKSBojXYI39XJzyFzWPTwdO' // password: test123
+// Route to test the database connection
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT NOW()');
+    res.json({
+      message: 'Database connection successful!',
+      time: rows[0].now,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      error: 'Database connection failed',
+      details: (err as Error).message,
+    });
   }
-];
-
-const tasks = [
-  {
-    id: '1',
-    title: 'Complete project documentation',
-    description: 'Write comprehensive documentation for the todo app project',
-    priority: 'high',
-    status: 'pending',
-    dueDate: '2024-01-15',
-    categories: ['work', 'documentation'],
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
-    userId: '1'
-  },
-  {
-    id: '2',
-    title: 'Buy groceries',
-    description: 'Milk, bread, eggs, and vegetables',
-    priority: 'medium',
-    status: 'pending',
-    dueDate: '2024-01-12',
-    categories: ['personal', 'shopping'],
-    createdAt: '2024-01-10T09:00:00Z',
-    updatedAt: '2024-01-10T09:00:00Z',
-    userId: '1'
-  },
-  {
-    id: '3',
-    title: 'Review pull requests',
-    description: 'Review 3 pending PRs for the team',
-    priority: 'high',
-    status: 'completed',
-    dueDate: '2024-01-11',
-    categories: ['work', 'code-review'],
-    createdAt: '2024-01-10T08:00:00Z',
-    updatedAt: '2024-01-11T15:30:00Z',
-    userId: '1'
-  },
-  {
-    id: '4',
-    title: 'Exercise',
-    description: '30 minutes cardio workout',
-    priority: 'low',
-    status: 'deferred',
-    dueDate: '2024-01-13',
-    categories: ['health', 'fitness'],
-    createdAt: '2024-01-10T07:00:00Z',
-    updatedAt: '2024-01-10T07:00:00Z',
-    userId: '1'
-  }
-];
+});
 
 // Authentication middleware
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -87,6 +44,10 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
   if (!token) {
     return res.status(401).json({ error: 'Access token required' });
+  }
+
+  if (!JWT_SECRET) {
+    return res.status(500).json({ error: 'JWT_SECRET is not defined' });
   }
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
@@ -104,7 +65,10 @@ app.post('/api/auth/signup', async (req: any, res: any) => {
     const { email, password, name } = req.body;
 
     // Check if user already exists
-    if (users.find((u: any) => u.email === email)) {
+    const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [
+      email,
+    ]);
+    if (userExists.rows.length > 0) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -112,14 +76,11 @@ app.post('/api/auth/signup', async (req: any, res: any) => {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create new user
-    const newUser = {
-      id: (users.length + 1).toString(),
-      email,
-      name,
-      password: hashedPassword
-    };
-
-    users.push(newUser);
+    const newUserResult = await pool.query(
+      'INSERT INTO users (email, name, password) VALUES ($1, $2, $3) RETURNING id, email, name',
+      [email, name, hashedPassword]
+    );
+    const newUser = newUserResult.rows[0];
 
     // Generate token
     const token = jwt.sign(
@@ -133,10 +94,11 @@ app.post('/api/auth/signup', async (req: any, res: any) => {
       user: {
         id: newUser.id,
         email: newUser.email,
-        name: newUser.name
-      }
+        name: newUser.name,
+      },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -146,7 +108,12 @@ app.post('/api/auth/login', async (req: any, res: any) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = users.find((u: any) => u.email === email);
+    const userResult = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+    const user = userResult.rows[0];
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -169,79 +136,76 @@ app.post('/api/auth/login', async (req: any, res: any) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
-      }
+        name: user.name,
+      },
     });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 // Task routes
-app.get('/api/tasks', authenticateToken, (req: any, res: any) => {
-  const userTasks = tasks.filter((task: any) => task.userId === req.user.id);
-  res.json(userTasks);
+app.get('/api/tasks', authenticateToken, async (req: any, res: any) => {
+  try {
+    const userTasksResult = await pool.query('SELECT * FROM tasks WHERE user_id = $1', [req.user.id]);
+    res.json(userTasksResult.rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to retrieve tasks' });
+  }
 });
 
-app.post('/api/tasks', authenticateToken, (req: any, res: any) => {
+app.post('/api/tasks', authenticateToken, async (req: any, res: any) => {
   try {
     const { title, description, priority, dueDate, categories } = req.body;
-
-    const newTask = {
-      id: (tasks.length + 1).toString(),
-      title,
-      description,
-      priority: priority || 'medium',
-      status: 'pending',
-      dueDate,
-      categories: categories || [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: req.user.id
-    };
-
-    tasks.push(newTask);
-    res.status(201).json(newTask);
+    const newTaskResult = await pool.query(
+      'INSERT INTO tasks (title, description, priority, due_date, categories, user_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [title, description, priority, dueDate, categories, req.user.id]
+    );
+    res.status(201).json(newTaskResult.rows[0]);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to create task' });
   }
 });
 
-app.patch('/api/tasks/:id', authenticateToken, (req: any, res: any) => {
+app.patch('/api/tasks/:id', authenticateToken, async (req: any, res: any) => {
   try {
     const taskId = req.params.id;
-    const updates = req.body;
+    const { title, description, priority, status, dueDate, categories } = req.body;
 
-    const taskIndex = tasks.findIndex((task: any) => task.id === taskId && task.userId === req.user.id);
-    
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: 'Task not found' });
+    const updatedTaskResult = await pool.query(
+      'UPDATE tasks SET title = $1, description = $2, priority = $3, status = $4, due_date = $5, categories = $6, updated_at = NOW() WHERE id = $7 AND user_id = $8 RETURNING *',
+      [title, description, priority, status, dueDate, categories, taskId, req.user.id]
+    );
+
+    if (updatedTaskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found or user not authorized' });
     }
 
-    tasks[taskIndex] = {
-      ...tasks[taskIndex],
-      ...updates,
-      updatedAt: new Date().toISOString()
-    };
-
-    res.json(tasks[taskIndex]);
+    res.json(updatedTaskResult.rows[0]);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to update task' });
   }
 });
 
-app.delete('/api/tasks/:id', authenticateToken, (req: any, res: any) => {
+app.delete('/api/tasks/:id', authenticateToken, async (req: any, res: any) => {
   try {
     const taskId = req.params.id;
-    const taskIndex = tasks.findIndex((task: any) => task.id === taskId && task.userId === req.user.id);
-    
-    if (taskIndex === -1) {
-      return res.status(404).json({ error: 'Task not found' });
-    }
+    const deleteTaskResult = await pool.query(
+      'DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING *',
+      [taskId, req.user.id]
+    );
 
-    tasks.splice(taskIndex, 1);
+    if (deleteTaskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Task not found or user not authorized' });
+    }
+    
     res.status(204).send();
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Failed to delete task' });
   }
 });
