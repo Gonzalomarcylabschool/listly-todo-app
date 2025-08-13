@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import path from 'path';
+import fs from 'fs';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -9,10 +11,13 @@ const JWT_SECRET = 'your-secret-key-change-in-production';
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Frontend URL
+  origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
+
+// Serve static files from the React app build
+app.use(express.static(path.resolve(__dirname, '../../frontend/dist')));
 
 // Dummy data storage
 const users = [
@@ -246,8 +251,25 @@ app.get('/api/health', (req: any, res: any) => {
   res.json({ status: 'OK', message: 'Todo app backend is running' });
 });
 
+// Serve React app for any non-API routes
+function serveIndexHtml(req: any, res: any) {
+  const indexPath = path.resolve(__dirname, '../../frontend/dist/index.html');
+  console.log('Resolved index.html path:', indexPath);
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(500).send('index.html not found at ' + indexPath);
+  }
+}
+
+app.get('/', serveIndexHtml);
+app.get('/login', serveIndexHtml);
+app.get('/signup', serveIndexHtml);
+app.get('/dashboard', serveIndexHtml);
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📝 Test user: test@example.com / test123`);
-  console.log(`🔗 Frontend should connect to: http://localhost:5173`);
+  console.log(`🌐 Frontend served at: http://localhost:${PORT}`);
+  console.log(`🔗 API available at: http://localhost:${PORT}/api`);
 }); 
